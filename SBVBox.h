@@ -1,0 +1,164 @@
+#ifndef _SBV_BOX_
+#define _SBV_BOX_
+
+#include <Core/IListener.h>
+#include <Display/Camera.h>
+#include <Geometry/Box.h>
+#include <Geometry/Line.h>
+#include <Geometry/Plane.h>
+#include <Geometry/Polygon.h>
+#include <Geometry/Tests.h>
+#include <Math/Vector.h>
+#include <Meta/OpenGL.h>
+#include <Resources/ITexture3D.h>
+#include <Renderers/IRenderer.h>
+#include <Scene/ISceneNodeVisitor.h>
+
+#include <vector>
+
+using namespace OpenEngine;
+using Core::IListener;
+using Core::InitializeEventArg;
+using Core::ProcessEventArg;
+using Geometry::Box;
+using Geometry::Line;
+using Geometry::Plane;
+using Geometry::Polygon;
+using Geometry::Tests;
+using Math::Vector;
+using Scene::RenderNode;
+using Scene::ISceneNodeVisitor;
+using Renderers::RenderingEventArg;
+
+
+/***
+ * Slice Based Volumetric Box
+ */
+class SBVBox 
+: public IListener<OpenEngine::Core::InitializeEventArg>,
+    public IListener<OpenEngine::Core::ProcessEventArg>,
+    public RenderNode {
+ private:
+    Display::Camera& camera;
+    Box* box;
+    Resources::ITexture3DPtr tex;
+    unsigned int halfNumberOfSlices;
+    std::vector<Polygon> polygons;
+
+ public:
+ SBVBox(Display::Camera camera, Resources::ITexture3DPtr tex) 
+     : camera(camera), tex(tex) {
+        Vector<3,float> center(0.0f);
+        Vector<3,float> relCorner(10.0f);
+        box = new Box(center, relCorner);
+        halfNumberOfSlices = 0;//13;
+    }
+
+    void Handle(OpenEngine::Core::InitializeEventArg arg) {
+        // handle texture load
+    }
+
+    void Handle(OpenEngine::Core::ProcessEventArg arg) {
+        //@todo: transform box by traversing tree
+
+        // get camera and calculate position and rotation
+        Vector<3,float> camPos = camera.GetPosition();
+        Vector<3,float> camDir(0.0f,0.0f,-1.0f);
+        camDir = camera.GetDirection().RotateVector(camDir);
+
+        // for each plane 
+        polygons.clear();
+        for (int slice = -halfNumberOfSlices; 
+             slice<=(int)halfNumberOfSlices; slice++) {
+            Vector<3,float> pointOnPlane = box->GetCenter();
+            float thickness = (box->GetCorner().GetLength() / (float)(halfNumberOfSlices+1));
+            float length = slice * thickness;
+            pointOnPlane += camDir * length;
+            Plane plane(camDir, pointOnPlane);
+            //logger.info << "plane:" << plane.ToString() << logger.end;
+
+            // calc new intersection points
+            Polygon polygon;
+            bool intersects = Tests::Intersects(*box, plane, &polygon);
+            //logger.info << "intersects:" << intersects << logger.end;
+            if (intersects) {
+                // sort points based on angle projected onto camera
+                polygon.SortPoints();
+                polygons.push_back(polygon);
+            }
+        }
+    }
+
+    void Apply(RenderingEventArg arg, ISceneNodeVisitor& v) {
+        // bind 3d texture
+        glBindTexture(GL_TEXTURE_3D, tex->GetID());
+        //logger.info << "binding texture with id: " << tex->GetID() << logger.end;
+        GLboolean tex3d = glIsEnabled(GL_TEXTURE_3D);
+        glEnable(GL_TEXTURE_3D);
+
+        GLboolean b = glIsEnabled(GL_BLEND);
+        glEnable(GL_BLEND);
+
+        // for each polygon back to front
+        //     render the polygon
+        for (unsigned int i=0; i<polygons.size(); i++) {
+            Polygon polygon = polygons[i];
+
+            //logger.info << "POLYGON BEGIN" << logger.end;
+            glBegin(GL_POLYGON);
+            for (unsigned int p=0; p<polygon.NumberOfPoints(); p++) {
+                Vector<3,float> point = polygon.GetPoint(p);
+                //logger.info << "point: " << point << logger.end;
+                float* pointer = &(point[0]);
+                //@todo: calc texture coords
+                glTexCoord3fv(pointer);
+                glVertex3fv(pointer);
+            }
+            glEnd();
+        }
+        
+        // unbind texture
+        glBindTexture(GL_TEXTURE_3D, 0);
+        if (!tex3d)
+            glDisable(GL_TEXTURE_3D);
+
+        if (!b)
+            glDisable(GL_BLEND);
+
+        bool debug = true;
+        if (debug) {
+            // render box as lines
+            std::vector<Line> lines = box->GetBoundingLines();
+            for (unsigned int i=0; i<lines.size(); i++) {
+                Line line = lines[i];
+                //logger.info << "Line" << line.ToString() << logger.end;
+                Vector<3,float> color(1.0f);
+                arg.renderer.DrawLine(line, color, 2);
+            }
+
+            // render polygons as lines
+            for (unsigned int i=0; i<polygons.size(); i++) {
+                Polygon polygon = polygons[i];
+                unsigned int noe = polygon.NumberOfPoints();
+                for (unsigned int p=0; p<noe; p++) {
+                    Vector<3,float> point1 = polygon.GetPoint(p);
+                    Vector<3,float> point2 = polygon.GetPoint((p+1)%noe);
+                    Line line(point1,point2);
+                    //logger.info << "Polygon" << polygon.ToString() << logger.end;
+                    //Vector<3,float> color(p/((float)polygon.NumberOfPoints()),0.0f,0.0f);
+                    Vector<3,float> color(1-(i/((float)polygons.size())),0.0f,0.0f);
+                    //Vector<3,float> color(1.0f,0.0f,0.0f);
+                    arg.renderer.DrawLine(line, color, 2);
+                    Vector<3,float> color2(0.0f,1.0f,0.0f);
+                    arg.renderer.DrawPoint(point1, color2, 4);
+                    arg.renderer.DrawPoint(point2, color2, 4);
+                }
+                //Vector<3,float> color3(0.0f,0.0f,1.0f);
+                //arg.renderer.DrawPoint(polygon.GetCenterOfGravity(), color3, 9);
+            }
+            // @todo: if debug then render proxy geometry, box and planes
+        }
+    }
+};
+
+#endif // _SBV_BOX_
