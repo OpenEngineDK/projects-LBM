@@ -51,7 +51,7 @@ class SBVBox
         Vector<3,float> center(0.0f);
         Vector<3,float> relCorner(10.0f);
         box = new Box(center, relCorner);
-        halfNumberOfSlices = 0;//13;
+        halfNumberOfSlices = 100;
     }
 
     void Handle(OpenEngine::Core::InitializeEventArg arg) {
@@ -93,14 +93,20 @@ class SBVBox
         // bind 3d texture
         glBindTexture(GL_TEXTURE_3D, tex->GetID());
         //logger.info << "binding texture with id: " << tex->GetID() << logger.end;
+        // save gl state
         GLboolean tex3d = glIsEnabled(GL_TEXTURE_3D);
+        GLboolean b = glIsEnabled(GL_BLEND);
+
+        // set gl start
         glEnable(GL_TEXTURE_3D);
 
-        GLboolean b = glIsEnabled(GL_BLEND);
+        glBlendEquation(GL_FUNC_ADD);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
 
         // for each polygon back to front
         //     render the polygon
+        glColor4f(1.0f,1.0f,1.0f,1.0f);
         for (unsigned int i=0; i<polygons.size(); i++) {
             Polygon polygon = polygons[i];
 
@@ -108,10 +114,19 @@ class SBVBox
             glBegin(GL_POLYGON);
             for (unsigned int p=0; p<polygon.NumberOfPoints(); p++) {
                 Vector<3,float> point = polygon.GetPoint(p);
-                //logger.info << "point: " << point << logger.end;
+
+                // calculate texture coordinate
+                Vector<3,float> texCoord = point;
+                texCoord /= box->GetCorner().GetLength();
+                texCoord *= 0.5;
+                texCoord += Vector<3,float>(0.5f);
+
+                // apply texture coordinate
+                float* pointer2 = &(texCoord[0]);
+                glTexCoord3fv(pointer2);
+
+                // draw point
                 float* pointer = &(point[0]);
-                //@todo: calc texture coords
-                glTexCoord3fv(pointer);
                 glVertex3fv(pointer);
             }
             glEnd();
@@ -119,9 +134,10 @@ class SBVBox
         
         // unbind texture
         glBindTexture(GL_TEXTURE_3D, 0);
+
+        // reset gl state
         if (!tex3d)
             glDisable(GL_TEXTURE_3D);
-
         if (!b)
             glDisable(GL_BLEND);
 
@@ -136,6 +152,7 @@ class SBVBox
                 arg.renderer.DrawLine(line, color, 2);
             }
 
+            /*
             // render polygons as lines
             for (unsigned int i=0; i<polygons.size(); i++) {
                 Polygon polygon = polygons[i];
@@ -157,6 +174,7 @@ class SBVBox
                 //arg.renderer.DrawPoint(polygon.GetCenterOfGravity(), color3, 9);
             }
             // @todo: if debug then render proxy geometry, box and planes
+            */
         }
     }
 };

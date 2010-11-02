@@ -13,7 +13,7 @@ using Resources::Texture3DChangedEventArg;
 
 float omega = 1.0f;
 float value = 0.3;
-//int demoval = 1;
+int demoval = 1;
 /*
 //loggin
 std::ofstream outdensity;
@@ -102,7 +102,7 @@ void LBPhysics::StreamStep(){
 
 //const float minimum = ;
 //const float maximum = 6.0;
-//static unsigned int it = 0;
+static unsigned int it = 0;
 
 void LBPhysics::CollideStep() {
     /*
@@ -170,7 +170,6 @@ void LBPhysics::CollideStep() {
 				//		outdensity << it << " "<< rho << std::endl;
 				//}
 				
-				/*
 				if(demoval == 1 && i*2==MY_SIZE && j*2==MY_SIZE && k*2== MY_SIZE && it%100==0) 
 					uy += value;
 
@@ -178,7 +177,6 @@ void LBPhysics::CollideStep() {
 					ux -= 0.3f;
 				if(demoval == 2 && i == MY_SIZE-10 && j*2==MY_SIZE && k*2==MY_SIZE && it%100==0) //right side
 					ux += 0.3f;
-                */
 
 				//this is the working one
 				
@@ -202,7 +200,7 @@ void LBPhysics::CollideStep() {
 				density[(entry)*4+1] = 0; //green
 				density[(entry)*4+2] = 255; //blue
 				}
-				density[(entry)*4+3] = value; //alpha
+				density[(entry)*4+3] = value*10; //alpha
 				//density[(entry)*4+3] = rho*255.f; //alpha
 				//std::cout  << it  << std::endl;
 				//perform collision
@@ -264,7 +262,7 @@ void LBPhysics::CollideStep() {
 	}
     */
 
-	//it++;
+	it++;
 	//if(it==100)
 		//exit(0);
 }
