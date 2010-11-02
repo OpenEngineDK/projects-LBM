@@ -46,7 +46,7 @@ class SBVBox
     std::vector<Polygon> polygons;
 
  public:
- SBVBox(Display::Camera camera, Resources::ITexture3DPtr tex) 
+ SBVBox(Display::Camera& camera, Resources::ITexture3DPtr tex) 
      : camera(camera), tex(tex) {
         Vector<3,float> center(0.0f);
         Vector<3,float> relCorner(10.0f);
