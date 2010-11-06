@@ -35,7 +35,8 @@
 
 // OpenGL stuff
 #include <Renderers/OpenGL/Renderer.h>
-#include <Display/OpenGL/RenderCanvas.h>
+#include <Display/RenderCanvas.h>
+#include <Display/OpenGL/TextureCopy.h>
 #include <Renderers/OpenGL/RenderingView.h>
 
 // Project files
@@ -178,7 +179,7 @@ void SetupRendering(){
 
     renderer->InitializeEvent().Attach(*renderingview);
     renderer->ProcessEvent().Attach(*renderingview);
-    canvas = new Display::OpenGL::RenderCanvas();
+    canvas = new Display::RenderCanvas(new Display::OpenGL::TextureCopy());
     canvas->SetViewingVolume(frustum);
     canvas->SetRenderer(renderer);
     canvas->SetScene(scene);
