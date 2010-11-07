@@ -48,8 +48,8 @@ class SBVBox
  public:
  SBVBox(Display::Camera& camera, Resources::ITexture3DPtr tex) 
      : camera(camera), tex(tex) {
-        Vector<3,float> center(0.0f);
-        Vector<3,float> relCorner(10.0f);
+        Vector<3,float> center(0.5f);
+        Vector<3,float> relCorner(0.5f);
         box = new Box(center, relCorner);
         halfNumberOfSlices = 100;
     }

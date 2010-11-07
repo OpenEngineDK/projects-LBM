@@ -23,6 +23,7 @@
 #include <Renderers/TextureLoader.h>
 #include <Renderers/IRenderingView.h>
 #include <Scene/RenderStateNode.h>
+#include <Scene/TransformationNode.h>
 #include <Scene/SceneNode.h>
 #include <Utils/Timer.h>
 
@@ -144,7 +145,13 @@ int main(int argc, char** argv) {
     engine->InitializeEvent().Attach(*box);
     engine->ProcessEvent().Attach(*box);
 
-    scene->AddNode(box);
+    TransformationNode *trans = new TransformationNode();
+    //trans->Rotate(1.0, 0.0, 0.0);
+    trans->Scale(20.0f, 20.0f, 20.0f);
+    
+    //scene->AddNode(box);
+    scene->AddNode(trans);
+    trans->AddNode(box);
 
     engine->Start();
 
