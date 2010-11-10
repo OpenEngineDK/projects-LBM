@@ -183,29 +183,22 @@ void LBPhysics::CollideStep() {
 				unsigned int width = MY_SIZE;
 				unsigned int height = MY_SIZE;
 				unsigned int entry = i + j * width + k * width * height;
-					
-				float densMax = 1.0f;
-				float densMin = 0.50f;
-				//unsigned char value = ceil( ( (rho/0.1f)-0.95f)*255);
-				unsigned char value = ( ((rho* -1.0) - densMin) / (densMax - densMin) ) * 255; 
-				density[(entry)*4+0] = 0; //red
-				density[(entry)*4+1] = 0; //green
-				density[(entry)*4+2] = 0; //blue
-				if (rho > 1) { // greater than one
-				density[(entry)*4+0] = 255; //red
-				density[(entry)*4+1] = 200; //green
-				density[(entry)*4+2] = 200; //blue
-				} else { //lover meaning empty.
-				density[(entry)*4+0] = 0; //red
-				density[(entry)*4+1] = 0; //green
-				density[(entry)*4+2] = 255; //blue
-				}
-				density[(entry)*4+3] = value*10; //alpha
-				//density[(entry)*4+3] = rho*255.f; //alpha
-				//std::cout  << it  << std::endl;
-				//perform collision
 
-				//float feq = 0.f;
+				float densMin = 0.0f;
+				float densMax = 0.005f;
+				unsigned char value = ( ((fabs(rho-1.0f)) - densMin) / (densMax - densMin) ) * 255.0f;
+
+				if (rho > 1) { // compressed
+                    density[(entry)*4+0] = 255; //red
+                    density[(entry)*4+1] = 0; // green
+                    density[(entry)*4+2] = 0; // blue
+				} else {
+                    density[(entry)*4+0] = 0; // red
+                    density[(entry)*4+1] = 0; // green
+                    density[(entry)*4+2] = 255; // blue
+				}
+				density[(entry)*4+3] = value; // alpha
+
 				float b = 0.f;
 				for(int l = 0; l < m; l++){
 					float a = ex[l] * ux + ey[l] * uy + ez[l] * uz;

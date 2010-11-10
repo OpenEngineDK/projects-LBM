@@ -72,7 +72,7 @@ class SBVBox
              slice<=(int)halfNumberOfSlices; slice++) {
             Vector<3,float> pointOnPlane = box->GetCenter();
             float thickness = (box->GetCorner().GetLength() / (float)(halfNumberOfSlices+1));
-            float length = slice * thickness;
+            float length = -slice * thickness;
             pointOnPlane += camDir * length;
             Plane plane(camDir, pointOnPlane);
             //logger.info << "plane:" << plane.ToString() << logger.end;
@@ -117,9 +117,9 @@ class SBVBox
 
                 // calculate texture coordinate
                 Vector<3,float> texCoord = point;
-                texCoord /= box->GetCorner().GetLength();
-                texCoord *= 0.5;
-                texCoord += Vector<3,float>(0.5f);
+                //texCoord /= box->GetCorner().GetLength();
+                //texCoord *= 0.5;
+                //texCoord += Vector<3,float>(0.5f);
 
                 // apply texture coordinate
                 float* pointer2 = &(texCoord[0]);
