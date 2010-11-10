@@ -16,12 +16,10 @@ darcs-dev /projects/LBM fh.daimi.au.dk:/users/cgd/code/projects/LBM
 darcs /extensions/SDL                    http://openengine.dk/code/extensions/SDL
 darcs /extensions/OpenGLRenderer         http://openengine.dk/code/extensions/OpenGLRenderer
 darcs /extensions/GenericHandlers 	 http://openengine.dk/code/extensions/GenericHandlers
-darcs /extensions/TexUtils      	 http://openengine.dk/code/extensions/TexUtils
 
 darcs-dev /extensions/SDL                    fh.daimi.au.dk:/users/cgd/code/extensions/SDL
 darcs-dev /extensions/OpenGLRenderer         fh.daimi.au.dk:/users/cgd/code/extensions/OpenGLRenderer
 darcs-dev /extensions/GenericHandlers 	     fh.daimi.au.dk:/users/cgd/code/extensions/GenericHandlers
-darcs-dev /extensions/TexUtils  	     fh.daimi.au.dk:/users/cgd/code/extensions/TexUtils
 
 # windows libraries
 
