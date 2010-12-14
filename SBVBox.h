@@ -13,6 +13,7 @@
 #include <Resources/ITexture3D.h>
 #include <Renderers/IRenderer.h>
 #include <Scene/ISceneNodeVisitor.h>
+#include <Scene/PostProcessNode.h>
 
 #include <vector>
 
@@ -27,6 +28,7 @@ using Geometry::Polygon;
 using Geometry::Tests;
 using Math::Vector;
 using Scene::RenderNode;
+using Scene::PostProcessNode;
 using Scene::ISceneNodeVisitor;
 using Renderers::RenderingEventArg;
 
@@ -45,9 +47,11 @@ class SBVBox
     unsigned int halfNumberOfSlices;
     std::vector<Polygon> polygons;
 
+    PostProcessNode* rayCaster;
+
  public:
- SBVBox(Display::Camera& camera, Resources::ITexture3DPtr tex) 
-     : camera(camera), tex(tex) {
+    SBVBox(Display::Camera& camera, Resources::ITexture3DPtr tex, PostProcessNode* pp = NULL) 
+        : camera(camera), tex(tex), rayCaster(pp) {
         Vector<3,float> center(0.5f);
         Vector<3,float> relCorner(0.5f);
         box = new Box(center, relCorner);
@@ -59,7 +63,6 @@ class SBVBox
     }
 
     void Handle(OpenEngine::Core::ProcessEventArg arg) {
-        //@todo: transform box by traversing tree
 
         // get camera and calculate position and rotation
         Vector<3,float> camPos = camera.GetPosition();
@@ -90,57 +93,61 @@ class SBVBox
     }
 
     void Apply(RenderingEventArg arg, ISceneNodeVisitor& v) {
-        // bind 3d texture
-        glBindTexture(GL_TEXTURE_3D, tex->GetID());
-        //logger.info << "binding texture with id: " << tex->GetID() << logger.end;
-        // save gl state
-        GLboolean tex3d = glIsEnabled(GL_TEXTURE_3D);
-        GLboolean b = glIsEnabled(GL_BLEND);
-
-        // set gl start
-        glEnable(GL_TEXTURE_3D);
-
-        glBlendEquation(GL_FUNC_ADD);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glEnable(GL_BLEND);
-
-        // for each polygon back to front
-        //     render the polygon
-        glColor4f(1.0f,1.0f,1.0f,1.0f);
-        for (unsigned int i=0; i<polygons.size(); i++) {
-            Polygon polygon = polygons[i];
-
-            //logger.info << "POLYGON BEGIN" << logger.end;
-            glBegin(GL_POLYGON);
-            for (unsigned int p=0; p<polygon.NumberOfPoints(); p++) {
-                Vector<3,float> point = polygon.GetPoint(p);
-
-                // calculate texture coordinate
-                Vector<3,float> texCoord = point;
-                //texCoord /= box->GetCorner().GetLength();
-                //texCoord *= 0.5;
-                //texCoord += Vector<3,float>(0.5f);
-
-                // apply texture coordinate
-                float* pointer2 = &(texCoord[0]);
-                glTexCoord3fv(pointer2);
-
-                // draw point
+        if (rayCaster == NULL){
+            // bind 3d texture
+            glBindTexture(GL_TEXTURE_3D, tex->GetID());
+            //logger.info << "binding texture with id: " << tex->GetID() << logger.end;
+            // save gl state
+            GLboolean tex3d = glIsEnabled(GL_TEXTURE_3D);
+            GLboolean b = glIsEnabled(GL_BLEND);
+            
+            // set gl start
+            glEnable(GL_TEXTURE_3D);
+            
+            glBlendEquation(GL_FUNC_ADD);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glEnable(GL_BLEND);
+            
+            // for each polygon back to front
+            //     render the polygon
+            glColor4f(1.0f,1.0f,1.0f,1.0f);
+            for (unsigned int i=0; i<polygons.size(); i++) {
+                Polygon polygon = polygons[i];
+                
+                //logger.info << "POLYGON BEGIN" << logger.end;
+                glBegin(GL_POLYGON);
+                for (unsigned int p=0; p<polygon.NumberOfPoints(); p++) {
+                    Vector<3,float> point = polygon.GetPoint(p);
+                    
+                    // calculate texture coordinate
+                    Vector<3,float> texCoord = point;
+                    //texCoord /= box->GetCorner().GetLength();
+                    //texCoord *= 0.5;
+                    //texCoord += Vector<3,float>(0.5f);
+                    
+                    // apply texture coordinate
+                    float* pointer2 = &(texCoord[0]);
+                    glTexCoord3fv(pointer2);
+                    
+                    // draw point
                 float* pointer = &(point[0]);
                 glVertex3fv(pointer);
+                }
+                glEnd();
             }
-            glEnd();
+            
+            // unbind texture
+            glBindTexture(GL_TEXTURE_3D, 0);
+            
+            // reset gl state
+            if (!tex3d)
+                glDisable(GL_TEXTURE_3D);
+            if (!b)
+                glDisable(GL_BLEND);
+        }else{
+            v.VisitPostProcessNode(rayCaster);
         }
         
-        // unbind texture
-        glBindTexture(GL_TEXTURE_3D, 0);
-
-        // reset gl state
-        if (!tex3d)
-            glDisable(GL_TEXTURE_3D);
-        if (!b)
-            glDisable(GL_BLEND);
-
         bool debug = true;
         if (debug) {
             // render box as lines

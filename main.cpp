@@ -18,6 +18,7 @@
 #include <Display/PerspectiveViewingVolume.h>
 #include <Logging/Logger.h>
 #include <Logging/StreamLogger.h>
+#include <Resources/ResourceManager.h>
 #include <Resources/Directory.h>
 #include <Resources/DirectoryManager.h>
 #include <Renderers/TextureLoader.h>
@@ -36,9 +37,12 @@
 
 // OpenGL stuff
 #include <Renderers/OpenGL/Renderer.h>
+#include <Resources/OpenGLShader.h>
 #include <Display/RenderCanvas.h>
 #include <Display/OpenGL/TextureCopy.h>
 #include <Renderers/OpenGL/RenderingView.h>
+
+#include <Scene/PostProcessNode.h>
 
 // Project files
 #include "LBPhysics.h"
@@ -114,7 +118,9 @@ int main(int argc, char** argv) {
 
     SetupDisplay();
 
+    ResourceManager<IShaderResource>::AddPlugin(new GLShaderPlugin());
     DirectoryManager::AppendPath("projects/LBM/data/");
+    DirectoryManager::AppendPath("projects/LBM/");
 
     scene = new SceneNode();
 
@@ -141,7 +147,13 @@ int main(int argc, char** argv) {
     engine->ProcessEvent().Attach(*lbp);
     textureloader->Load( lbp, Renderers::TextureLoader::RELOAD_IMMEDIATE );
 
-    SBVBox* box = new SBVBox(*camera, lbp);
+    Vector<2, int> dimension(800,600);
+    IShaderResourcePtr rc = ResourceManager<IShaderResource>::Create("shaders/RayCast.glsl");
+    PostProcessNode* rcNode = new PostProcessNode(rc, dimension);
+    rc->SetTexture("src", (ITexture3DPtr)lbp);
+    renderer->InitializeEvent().Attach(*rcNode);
+
+    SBVBox* box = new SBVBox(*camera, lbp, rcNode);
     engine->InitializeEvent().Attach(*box);
     engine->ProcessEvent().Attach(*box);
 
