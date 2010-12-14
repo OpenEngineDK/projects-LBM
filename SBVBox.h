@@ -46,6 +46,7 @@ class SBVBox
     Resources::ITexture3DPtr tex;
     unsigned int halfNumberOfSlices;
     std::vector<Polygon> polygons;
+    bool useRayCaster, debug;
 
     PostProcessNode* rayCaster;
 
@@ -56,10 +57,12 @@ class SBVBox
         Vector<3,float> relCorner(0.5f);
         box = new Box(center, relCorner);
         halfNumberOfSlices = 100;
+        useRayCaster = false;
+        debug = false;
     }
 
     void Handle(OpenEngine::Core::InitializeEventArg arg) {
-        // handle texture load
+        // handle initialize
     }
 
     void Handle(OpenEngine::Core::ProcessEventArg arg) {
@@ -93,7 +96,9 @@ class SBVBox
     }
 
     void Apply(RenderingEventArg arg, ISceneNodeVisitor& v) {
-        if (rayCaster == NULL){
+        if (rayCaster != NULL && useRayCaster == true) {
+            v.VisitPostProcessNode(rayCaster);
+        }else{
             // bind 3d texture
             glBindTexture(GL_TEXTURE_3D, tex->GetID());
             //logger.info << "binding texture with id: " << tex->GetID() << logger.end;
@@ -144,20 +149,6 @@ class SBVBox
                 glDisable(GL_TEXTURE_3D);
             if (!b)
                 glDisable(GL_BLEND);
-        }else{
-            v.VisitPostProcessNode(rayCaster);
-        }
-        
-        bool debug = true;
-        if (debug) {
-            // render box as lines
-            std::vector<Line> lines = box->GetBoundingLines();
-            for (unsigned int i=0; i<lines.size(); i++) {
-                Line line = lines[i];
-                //logger.info << "Line" << line.ToString() << logger.end;
-                Vector<3,float> color(1.0f);
-                arg.renderer.DrawLine(line, color, 2);
-            }
 
             /*
             // render polygons as lines
@@ -180,9 +171,35 @@ class SBVBox
                 //Vector<3,float> color3(0.0f,0.0f,1.0f);
                 //arg.renderer.DrawPoint(polygon.GetCenterOfGravity(), color3, 9);
             }
-            // @todo: if debug then render proxy geometry, box and planes
             */
         }
+        
+        if (debug) {
+            // render box as lines
+            std::vector<Line> lines = box->GetBoundingLines();
+            for (unsigned int i=0; i<lines.size(); i++) {
+                Line line = lines[i];
+                //logger.info << "Line" << line.ToString() << logger.end;
+                Vector<3,float> color(1.0f);
+                arg.renderer.DrawLine(line, color, 2);
+            }
+        }
+    }
+
+    void ToggleDebugInfo () {
+        debug = !debug;
+        if (debug)
+            logger.info << "using debug info" << logger.end;
+        else
+            logger.info << "turning off debug info" << logger.end;
+    }
+
+    void ToggleRenderTechnique() {
+        useRayCaster = !useRayCaster;
+        if (useRayCaster)
+            logger.info << "switching to raycaster" << logger.end;
+        else
+            logger.info << "switching to slice based render" << logger.end;
     }
 };
 

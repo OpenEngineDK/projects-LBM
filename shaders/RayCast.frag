@@ -61,6 +61,7 @@ void main () {
             //color = (1.0 - sample.a) * color + sample.a * sample;
             float scl = min(1.0 - color.a, sample.a);
             color += scl * sample;
+            color.w *= 1.06;
             if (color.a >= 1.0)
                 break;
         }

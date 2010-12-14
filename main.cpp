@@ -72,8 +72,6 @@ Frustum* frustum;
 IRenderingView* renderingview;
 TextureLoader* textureloader;
 
-bool useShader = true;
-
 class RenderStateHandler : public IListener<KeyboardEventArg> {
     RenderStateNode* node;
 public:
@@ -98,6 +96,20 @@ public:
             if (multiplier < 0.0) multiplier = 0.0;
         }
         */
+    }
+};
+
+class SBVBoxStateHandler : public IListener<KeyboardEventArg> {
+    SBVBox* box;
+public:
+    SBVBoxStateHandler(SBVBox* b) : box(b) {}
+    void Handle(KeyboardEventArg arg) {
+        if (arg.type == EVENT_PRESS && arg.sym == KEY_r){
+            box->ToggleRenderTechnique();
+        }
+        else if (arg.type == EVENT_PRESS && arg.sym == KEY_e){
+            box->ToggleDebugInfo();
+        }
     }
 };
 
@@ -156,6 +168,9 @@ int main(int argc, char** argv) {
     SBVBox* box = new SBVBox(*camera, lbp, rcNode);
     engine->InitializeEvent().Attach(*box);
     engine->ProcessEvent().Attach(*box);
+
+    SBVBoxStateHandler* ss_h = new SBVBoxStateHandler(box);
+    keyboard->KeyEvent().Attach(*ss_h);
 
     TransformationNode *trans = new TransformationNode();
     //trans->Rotate(1.0, 0.0, 0.0);
