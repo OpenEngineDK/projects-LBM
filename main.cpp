@@ -157,7 +157,7 @@ int main(int argc, char** argv) {
     LBPhysicsPtr lbp = LBPhysics::Create();
     engine->InitializeEvent().Attach(*lbp);
     engine->ProcessEvent().Attach(*lbp);
-    textureloader->Load( lbp, Renderers::TextureLoader::RELOAD_IMMEDIATE );
+    textureloader->Load( (OpenEngine::Resources::ITexture3DPtr)lbp, Renderers::TextureLoader::RELOAD_IMMEDIATE );
 
     Vector<2, int> dimension(800,600);
     IShaderResourcePtr rc = ResourceManager<IShaderResource>::Create("shaders/RayCast.glsl");
